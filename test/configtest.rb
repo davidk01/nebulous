@@ -47,11 +47,13 @@ class TestConfig < Minitest::Test
   end
 
   def test_loading_jenkins_yaml
-    assert(PoolConfig::Jenkins === PoolConfig.load('./harness/jenkins.yaml'), "Jenkins configuration type creates Jenkins configuration instance")
+    assert(PoolConfig::Jenkins === PoolConfig.load(File.expand_path(File.dirname __FILE__) + '/harness/jenkins.yaml'), 
+           "Jenkins configuration type creates Jenkins configuration instance")
   end
 
   def test_loading_bamboo_yaml
-    assert(PoolConfig::Bamboo === PoolConfig.load('./harness/bamboo.yaml'), "Bamboo configuration type creates Bamboo configuration instance")
+    assert(PoolConfig::Bamboo === PoolConfig.load(File.expand_path(File.dirname __FILE__) + '/harness/bamboo.yaml'), 
+           "Bamboo configuration type creates Bamboo configuration instance")
   end
 
   def test_loading_unknown_yaml

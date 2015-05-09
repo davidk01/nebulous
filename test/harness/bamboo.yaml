@@ -17,7 +17,7 @@ provision:
   - command: '/root/bamboo-agent-home/bin/bamboo-agent.sh restart'
     type: 'inline'
   - type: 'script'
-    script: '/some/local/path'
+    path: 'test/harness/bamboo.sh.erb'
     arguments: []
 bamboo: 'https://fake-ivy/jenkins'
 bamboo_username: 'user'
