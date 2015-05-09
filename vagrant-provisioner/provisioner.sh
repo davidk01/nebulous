@@ -1,7 +1,7 @@
 #!/bin/bash
 user="${1:-vagrant}"
 # import rvm key and install ruby
-if [[ ! $(su - ${user} -c 'ruby -v')]]; then
+if [[ ! $(su - ${user} -c 'ruby -v') ]]; then
   # seems like it currently installs the following packages:
   # patch, libyaml-devel, glibc-headers, autoconf, gcc-c++, glibc-devel, patch, readline-devel, zlib-devel, libffi-devel, openssl-devel, automake, libtool, bison, sqlite-devel
   su - ${user} -c 'command curl -sSL https://rvm.io/mpapis.asc | gpg --import -'
