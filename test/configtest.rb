@@ -72,14 +72,18 @@ class TestConfig < Minitest::Test
 
   def test_opennebula_state_jenkins
     config = PoolConfig.load(File.expand_path(File.dirname __FILE__) + '/harness/jenkins.yaml')
-    vms = config.opennebula_state
-    assert(vms.empty?, "There should be no VMs for the jenkins harness configuration")
+    config.stub :opennebula_state, [] do
+      vms = config.opennebula_state
+      assert(vms.empty?, "There should be no VMs for the jenkins harness configuration")
+    end
   end
 
   def test_opennebula_state_bamboo
     config = PoolConfig.load(File.expand_path(File.dirname __FILE__) + '/harness/bamboo.yaml')
-    vms = config.opennebula_state
-    assert(vms.empty?, "There should be no VMs for the bamboo harness configuration")
+    config.stub :opennebula_state, [] do
+      vms = config.opennebula_state
+      assert(vms.empty?, "There should be no VMs for the bamboo harness configuration")
+    end
   end
 
 end
