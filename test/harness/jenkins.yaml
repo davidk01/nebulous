@@ -1,0 +1,15 @@
+name: 'integration-test-jenkins'
+opennebula_user_id: 7
+type: 'jenkins'
+count: 2
+template_id: 3
+provision:
+  - command: 'uptime'
+    type: 'inline'
+  - command: 'echo hi'
+    type: 'inline'
+jenkins: 'https://fake-ivy/jenkins'
+jenkins_username: 'user'
+jenkins_password: 'pass'
+credentials_id: '2dfc58d2-9d2e-49dd-849b-4eb1a4933e54'
+private_key_path: '/home/jenkins/.ssh/id_rsa'

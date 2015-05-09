@@ -1,0 +1,24 @@
+name: 'integration-test-bamboo'
+opennebula_user_id: 7
+type: 'bamboo'
+count: 100
+template_id: 3
+provision:
+  - command: 'uptime'
+    type: 'inline'
+  - command: 'echo hi'
+    type: 'inline'
+  - command: 'wget http://ivy/large-third-party/bamboo-agent-install/pt-custom-bamboo-agent-installer-5.7.2.jar'
+    type: 'inline'
+  - command: '/usr/java/jdk1.7.0_latest/bin/java $JAVA_ARGS -jar pt-custom-bamboo-agent-installer-5.7.2.jar $BAMBOO_URL/agentServer install'
+    type: 'inline'
+  - command: 'echo "test-capability=true" >> /root/bamboo-agent-home/bin/bamboo-capabilities.properties'
+    type: 'inline'
+  - command: '/root/bamboo-agent-home/bin/bamboo-agent.sh restart'
+    type: 'inline'
+  - type: 'script'
+    script: '/some/local/path'
+    arguments: []
+bamboo: 'https://fake-ivy/jenkins'
+bamboo_username: 'user'
+bamboo_password: 'pass'

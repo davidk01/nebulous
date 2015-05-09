@@ -1,0 +1,18 @@
+name: 'integration-test-bamboo'
+opennebula_user_id: 8
+type: 'bamboo'
+count: 90
+template_id: 3
+provision:
+  - command: 'uptime'
+    type: 'inline'
+  - command: 'echo hi'
+    type: 'inline'
+  - command: 'touch i-was-here'
+    type: 'inline'
+  - path: '/root/provisioners/bamboo.sh'
+    arguments: ['http://10.160.36.194:8085', '${user}', '${password}']
+    type: 'script'
+bamboo: 'http://10.160.36.194:8085/'
+bamboo_username: '${user}'
+bamboo_password: '${password}'

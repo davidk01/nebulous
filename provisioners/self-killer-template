@@ -1,0 +1,12 @@
+if !ENV['bamboo_capability_ephemeral']
+  if `cat /root/bamboo-agent-home/bin/bamboo-capabilities.properties`["ephemeral"].nil?
+    raise StandardError, "Can not disable non-ephemeral agent"
+  end
+end
+agent_id = ENV['bamboo_agentId']
+if agent_id.nil?
+  agent_id = `cat /root/bamboo-agent-home/bamboo-agent.cfg.xml | grep '<id>'`.strip.match(/(\d+)/)[1]
+end
+# Example disable POST command
+# http://10.160.36.194:8085/admin/agent/disableAgent.action?agentId=1384687
+`curl -b bamboo-cookies.txt -c bamboo-cookies.txt -s -u '${username}':'${password}' '${server}/admin/agent/disableAgent.action?agentId=#{agent_id}'`

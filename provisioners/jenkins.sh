@@ -1,0 +1,2 @@
+#!/bin/bash
+sudo su jenkins -c "echo 'ssh-rsa AAAAB3NzaC1yc2EAAAABIwAAAQEApxWVzMjl0JHVUUOQwF8RjNDmBamxLGlJWv8uQaqbxdiwqe3GYwTszCwe3YZkg+unyxqf+MNrzqa41bm30DdXYZLm0iHAP6NjICb30M14jh5KTCS2J80p4cJqciZ2/SDtsDi8NByJ62OiHWL6nWwu3g/jVHMhvYWsliqb9XdnTc4h+lEk4VY/wsl7UygTIpFqlEPUgK0OECsbhwjYPhFC8u5zKeHEjmuAZlFBaAtDA8ujvmjQujZ1w0ZL6ucrt1ixmoHnI4VwJRN4e/zgaLobgkj2pd7bkDhyljfkZRz0jDiqWrO+UqZrwaCfTJ7YFKviWP21cRMPD2SWS63wT7D2FQ== jenkins@bd-scm-01' >> ~/.ssh/authorized_keys"
