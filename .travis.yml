@@ -4,4 +4,5 @@ rvm:
 - 1.9.3
 cache: bundler
 bundler_args: --without development
+env: ONE_AUTH='user:pass' ONE_XMLRPC='https://dummy/RPC2'
 script: bundle exec rake test
