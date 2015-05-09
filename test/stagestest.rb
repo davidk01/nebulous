@@ -18,7 +18,7 @@ class TestStages < Minitest::Test
   end
 
   def test_directory_stage
-    instance = Stages::Directory.new(File.expand_path(File.dirname __FILE__) + './harness/directory', ['arg1', 'arg2'], 1)
+    instance = Stages::Directory.new(File.expand_path(File.dirname __FILE__) + '/harness/directory', ['arg1', 'arg2'], 1)
     commands = instance.commands('127.0.0.1')
     assert(commands.length == 2, "There are two commands")
     first_command = commands[0]

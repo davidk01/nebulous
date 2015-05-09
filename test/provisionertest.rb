@@ -8,7 +8,7 @@ require 'minitest/autorun'
 class TestProvisioner < Minitest::Test
 
   def test_bamboo_forking
-    config = PoolConfig.load(File.expand_path(File.dirname __FILE__) + './harness/bamboo.yaml')
+    config = PoolConfig.load(File.expand_path(File.dirname __FILE__) + '/harness/bamboo.yaml')
     provisioner = config.provisioner
     config.stub :opennebula_state, [] do
       assert(provisioner.delta == 100, "Pool delta is 100.")
@@ -21,7 +21,7 @@ class TestProvisioner < Minitest::Test
   end
 
   def test_bamboo_partitioning
-    config = PoolConfig.load(File.expand_path(File.dirname __FILE__) + './harness/bamboo.yaml')
+    config = PoolConfig.load(File.expand_path(File.dirname __FILE__) + '/harness/bamboo.yaml')
     provisioner = config.provisioner
     config.stub :opennebula_state, [] do
       assert(provisioner.delta == 100, "Pool delta is 100.")
