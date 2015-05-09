@@ -32,7 +32,7 @@ repo="https://github.com/davidk01/nebulous.git"
 git clone ${repo}
 pushd nebulous
 bundle package --all
-bundle install --deployment --standalone
+bundle install --without test development --deployment --standalone
 popd
 
 # at this point we have a ruby in /opt/ruby-${version} and bundled gems and code in /home/vagrant/nebulous
