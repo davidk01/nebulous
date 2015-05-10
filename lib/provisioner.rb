@@ -1,4 +1,5 @@
 require_relative './stages'
+require_relative './errors'
 
 ##
 # Supertype for provisioners.
@@ -24,7 +25,7 @@ class Provisioner
     # Must be defined in the subclass because it is going to override the delta calculation.
 
     def forked_provisioner
-      raise StandardError, "Must be defined in the subclass."
+      raise ForkingProvisionerDefinitionError, "Must be defined in the subclass."
     end
 
     ##
@@ -74,7 +75,7 @@ class Provisioner
     def ssh_ready?(vm_hashes)
       ssh_test = lambda do |vm_hash|
         ip_address = vm_hash['TEMPLATE']['NIC']['IP']
-        raise StandardError, "IP not found: #{vm_hash}." if ip_address.nil?
+        raise VMIPError, "IP not found: #{vm_hash}." if ip_address.nil?
         system("#{ssh_prefix} root@#{ip_address} -t 'uptime'")
       end
       counter = 0
@@ -205,91 +206,6 @@ class Provisioner
   class BambooProvisioner < ProvisionerType
 
     ##
-    # Localize all garbage collection methods to this class.
-
-    class GarbageCollector
-
-      ##
-      # Get all the information for an agent once and for all and store it here.
-
-      class Agent
-
-        def initialize(server, agent_url, username, password)
-          @server = server
-          @agent_url = agent_url
-          @username = username
-          @password = password
-          @agent_id = agent_url.match(/agentId=(\d+)/)[1]
-          raise StandardError, "Incorrect agent URL: #{agent_url}." if @agent_id.nil?
-          @raw_data = `curl -b bamboo-cookies.txt -c bamboo-cookies.txt -s -u '#{@username}':'#{@password}' '#{@agent_url}'`
-          raise StandardError, "Could not get agent info: #{@agent_url}." unless $?.exitstatus.zero?
-        end
-
-        ##
-        # Re-get the raw data for the agent.
-
-        def raw_data!
-          @raw_data = `curl -b bamboo-cookies.txt -c bamboo-cookies.txt -s -u '#{@username}':'#{@password}' '#{@agent_url}'`
-          raise StandardError, "Could not get agent info: #{@agent_url}." unless $?.exitstatus.zero?
-        end
-
-        ##
-        # Extract IP address from raw data.
-
-        def ip_address
-          start_index = @raw_info =~ /systemInfo_ipAddress/
-          if start_index
-            end_index = start_index + 400
-            ip_slice = raw_info[start_index..end_index]
-            ip_match = ip_slice.match(/(\d+(.\d+)+)/)
-            STDOUT.puts "Agent: #{agent_url}, #{ip_match}."
-          else
-            nil
-          end
-        end
-
-        ##
-        # Look for ephemeral keyword in raw data.
-
-        def ephemeral?
-          @raw_data["ephemeral"]
-        end
-
-        ##
-        # Look for Offline keyword in raw data.
-
-        def offline?
-          @raw_data["Offline"]
-        end
-
-        ##
-        # Look for (Disabled) keyword in raw data.
-
-        def disabled?
-          @raw_data["(Disabled)"]
-        end
-
-      end
-
-      ##
-      # Go to the server and grab all the agents whether they are online or offline but filter everything to just
-      # ephemeral agents.
-
-      def initialize(server, username, password)
-        endpoint = (server[-1] == 47 || server[-1] == '/') ?
-         server + 'admin/agent/configureAgents!default.action' : server + '/admin/agent/configureAgents!default.action'
-        raw_data = `curl -b bamboo-cookies.txt -c bamboo-cookies.txt -s -u '#{username}':'#{password}' '#{endpoint}' | grep '/admin/agent/viewAgent.action?agentId='`
-        raise StandardError, "Could not get agent data: #{endpoint}." unless $?.exitstatus.zero?
-        agent_urls = raw_data.split("</a>").map {|line| line.match(/href="(.+?)"/)}.reject(&:nil?).map {|m| m[1]}
-        agent_full_urls = agent_urls.map {|url| (server[-1] == 47 || server[-1] == '/') ? "#{server}#{url[1..-1]}" : "#{server}#{url}"}
-        @agents = agent_full_urls.map {|url| Agent.new(url, server, username, password)}
-        # We only care about ephemeral agents
-        @agents.select! {|agent| agent.ephemeral?}
-      end
-
-    end
-
-    ##
     # Override delta to be a specific size.
 
     class ForkingProvisioner < BambooProvisioner
@@ -336,7 +252,7 @@ class Provisioner
       username = @configuration.bamboo_username
       password = @configuration.bamboo_password
       raw_info = `curl -b bamboo-cookies.txt -c bamboo-cookies.txt -s -u '#{username}':'#{password}' '#{url}'`
-      raise StandardError, "Non-zero exit: #{url}." unless $?.exitstatus.zero?
+      raise BambooAgentInfoError, "Non-zero exit: #{url}." unless $?.exitstatus.zero?
       remove_endpoint = (bamboo[-1] == 47 || bamboo[-1] == '/') ?
        "#{bamboo}admin/agent/removeAgent.action?agentId=" : "#{bamboo}/admin/agent/removeAgent.action?agentId="
       if raw_info["ephemeral"] && raw_info["Offline"]
@@ -358,7 +274,7 @@ class Provisioner
       username = @configuration.bamboo_username
       password = @configuration.bamboo_password
       raw_info = `curl -b bamboo-cookies.txt -c bamboo-cookies.txt -s -u '#{username}':'#{password}' '#{url}'`
-      raise StandardError, "Non-zero exit: #{url}." unless $?.exitstatus.zero?
+      raise BambooAgentInfoError, "Non-zero exit: #{url}." unless $?.exitstatus.zero?
       remove_endpoint = (bamboo[-1] == 47 || bamboo[-1] == '/') ?
         "#{bamboo}admin/agent/removeAgent.action?agentId=" : "#{bamboo}/admin/agent/removeAgent.action?agentId="
       if raw_info["ephemeral"] && raw_info["(Disabled)"]
@@ -390,7 +306,7 @@ class Provisioner
         agent_full_urls.map do |url|
           STDOUT.puts "Performing verification: #{url}."
           raw_info = `curl -b bamboo-cookies.txt -c bamboo-cookies.txt -s -u '#{bamboo_username}':'#{bamboo_password}' '#{url}'`
-          raise StandardError, "Problem during verification: #{url}." unless $?.exitstatus.zero?
+          raise BamgooAgentInfoError, "Problem during verification: #{url}." unless $?.exitstatus.zero?
           start_index = raw_info =~ /systemInfo_ipAddress/
           # See if we can even extract an IP address
           if start_index
@@ -429,7 +345,7 @@ class Provisioner
 
     def offline_or_local?(agent_url, bamboo_username, bamboo_password)
       raw_data = `curl -b bamboo-cookies.txt -c bamboo-cookies.txt -s -u '#{bamboo_username}':'#{bamboo_password}' '#{agent_url}'`
-      raise StandardError, "Offline check failure: #{agent_url}." unless $?.exitstatus.zero?
+      raise BambooAgentInfoError, "Offline check failure: #{agent_url}." unless $?.exitstatus.zero?
       if raw_data["Offline"] || raw_data["(Local)"]
         STDOUT.puts "Agent offline or local agent so filtering it from consideration: #{agent_url}."
         return true
@@ -447,7 +363,7 @@ class Provisioner
         `curl -b bamboo-cookies.txt -c bamboo-cookies.txt -s -u '#{bamboo_username}':'#{bamboo_password}' '#{endpoint}' > bamboo-agent-page.html`
         unless $?.exitstatus.zero?
           STDERR.puts "Can not access bamboo server. This is definitely a problem."
-          raise StandardError, "Could not access bamboo server: #{endpoint}."
+          raise BambooMasterServerError, "Could not access bamboo server: #{endpoint}."
         end
       end
       agent_urls = raw_data.split("</a>").map {|line| line.match(/href="(.+?)"/)}.reject(&:nil?).map {|m| m[1]}
@@ -472,7 +388,7 @@ class Provisioner
     # must be considered active so we have to add it to the set of agent urls
 
     def job_summary_verification(agent_urls, agent_url_template, bamboo, bamboo_username, bamboo_password)
-      raise StandardError, "agent url template can not be nil." if agent_url_template.nil? && agent_urls.any?
+      raise ArgumentError, "agent url template can not be nil." if agent_url_template.nil? && agent_urls.any?
       endpoint = ((l = bamboo[-1]) == 47 || l == '/') ?
        bamboo + 'build/admin/ajax/getDashboardSummary.action' : bamboo + '/build/admin/ajax/getDashboardSummary.action'
       # get the data X times Y seconds apart
@@ -534,10 +450,10 @@ class Provisioner
       # At this point we should only have the active agents so we ge the IP addresses of the active agents
       agent_ip_addrs = agent_full_urls.map do |url|
         raw_info = `curl -b bamboo-cookies.txt -c bamboo-cookies.txt -s -u '#{bamboo_username}':'#{bamboo_password}' '#{url}'`
-        raise StandardError, "Could not get raw agent info: #{url}." unless $?.exitstatus.zero?
+        raise BambooAgentInfoError, "Could not get raw agent info: #{url}." unless $?.exitstatus.zero?
         if raw_info["Capabilities"].nil?
           STDERR.puts "Something went wrong when grabbing agent data: #{url}."
-          raise StandardError, "Unable to find signature on the page: #{raw_info}."
+          raise BambooAgentPageSignatureError, "Unable to find signature on the page: #{raw_info}."
         end
         start_index = raw_info =~ /systemInfo_ipAddress/
         if start_index
@@ -584,7 +500,6 @@ class Provisioner
         process_uptime = `#{ssh_prefix} root@#{vm_ip} -t 'ps -eo pid,comm,etime,args | grep java | grep -v grep | sed "s/  */ /g" | cut -d " " -f 4'`
         if process_uptime.strip.match(/\d+/).nil?
           STDERR.puts "Could not find java process uptime on agent: #{vm_ip}."
-          # raise StandardError, "Could not find java process uptime on agent: #{vm_ip}."
         end
         STDOUT.puts "Java process uptime: #{process_uptime}."
         uptime_minutes = process_uptime.match(/(\d+):/)

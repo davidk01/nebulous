@@ -1,5 +1,5 @@
 require_relative '../vendor/bundle/bundler/setup'
-['./config', './provisioner', './stages', './utils'].each do |relative|
+['./errors', './config', './provisioner', './stages', './utils'].each do |relative|
   require_relative relative
 end
 ['trollop'].each do |g|
@@ -86,23 +86,25 @@ valid_actions = {
 }
 opts = Trollop::options do
   opt :configuration, "Location of pool configuration yaml file",
-   :required => true, :type => :string
+   :required => true, :type => :string, :multi => false
   opt :action, "Type of action, e.g. #{valid_actions.keys.join(', ')}. Can be repeated several times",
    :required => true, :type => :string, :multi => true
+  opt :decryption_key, "File path for the decryption key for secure configurations",
+   :required => false, :type => :string, :multi => false
   opt :synthetic, "Provide a list of IP addresses to act on",
     :required => false, :type => :strings, :multi => false
   opt :partition, "Set the partition size for parallel provisioning",
-   :required => false, :type => :integer
+   :required => false, :type => :integer, :multi => false
 end
-# Instantiate the objects we might need
-config = PoolConfig.load(opts[:configuration])
+# Instantiate the objects we might need, and pass in the decryption key if there is one
+config = PoolConfig.load(opts[:configuration], opts[:decryption_key])
 # Uniquify the actions and verify it is something we can work with
 opts[:action].uniq!
 opts[:action].each do |action|
   case action
   when *valid_actions.keys
   else
-    raise StandardError, "Unknown action: #{action}."
+    raise UnknownActionError, "Unknown action: #{action}."
   end
 end
 # Now go through the actions and actually perform it

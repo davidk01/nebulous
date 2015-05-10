@@ -1,0 +1,26 @@
+name: 'integration-test-bamboo'
+opennebula_user_id: 7
+type: 'bamboo'
+count: 100
+template_id: 3
+provision:
+  - command: 'uptime'
+    type: 'inline'
+  - command: 'echo hi'
+    type: 'inline'
+  - command: 'wget http://ivy/large-third-party/bamboo-agent-install/pt-custom-bamboo-agent-installer-5.7.2.jar'
+    type: 'inline'
+  - command: '/usr/java/jdk1.7.0_latest/bin/java $JAVA_ARGS -jar pt-custom-bamboo-agent-installer-5.7.2.jar $BAMBOO_URL/agentServer install'
+    type: 'inline'
+  - command: 'echo "test-capability=true" >> /root/bamboo-agent-home/bin/bamboo-capabilities.properties'
+    type: 'inline'
+  - command: '/root/bamboo-agent-home/bin/bamboo-agent.sh restart'
+    type: 'inline'
+  - type: 'script'
+    path: 'test/harness/bamboo.sh.erb'
+    arguments: []
+bamboo: 'https://fake-ivy/jenkins'
+bamboo_username:
+  secure: "dQJGQhgTHBbny7eQPM2WX9A5hEuPgOLGLushk4frzyZQ+vWhMnTSO/LGagwbydpHlx/cjAv30XutU4AMLOfuej7WWdB3TH7K2tbVb23Vfaki9eI89v7f6A5kd8HTr+ywavH6rOm5AMrXvn7SgrF5QtETKQEgGtcSeROdxeOlyfOK/wmBwysZk6zahClFgHvuLlULCrK9vCqv9rlERto3Ceb09g9HPSqP+3CkP+hU2zK1ZRfM+ccsYuwtfZ3Raxf7wMl1kR7g1N3n35s5G+vA0t0Sd+WE4BsCgdhr9BVuvB58s5DVtnn3iRK7ckGeb9VmzG+rIvEyltmYw0mhlgEk9Q=="
+bamboo_password:
+  secure: "PXXal+Ax+bohRESO0xOn5x0dpj6C+7BpWUTZ5FqLRUlzZZ+eqw9iccaHK0qbYaP+haHNjIa4pUM8lAT1NDHvGpaAN6eS/hTBOpKYXnySzFBhNiHA3JBeUFOabwpCqiYs81D7tP5N52ojH2uCIxy2rpWoZNuoOsI5BIOhYoCByuO8jb5LvLFsDpkXN8U3v9cCy1UM9Ci8We3cJo7mNL3WOBBn6bbC+YP9O5oAlE/f7kt1gcfgsg0sGTWeBWahiddurt/Ojsl3bAZ3kGFvK3u9LQ/iyXs59VjtRd+epJ1G9KdUKzNr5xUZwHc+vVDLZY95d8u7B4bccLHE9CrIBO4Irg=="

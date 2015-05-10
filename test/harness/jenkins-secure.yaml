@@ -1,0 +1,17 @@
+name: 'integration-test-jenkins'
+opennebula_user_id: 7
+type: 'jenkins'
+count: 2
+template_id: 3
+provision:
+  - command: 'uptime'
+    type: 'inline'
+  - command: 'echo hi'
+    type: 'inline'
+jenkins: 'https://fake-ivy/jenkins'
+jenkins_username:
+  secure: "dQJGQhgTHBbny7eQPM2WX9A5hEuPgOLGLushk4frzyZQ+vWhMnTSO/LGagwb\nydpHlx/cjAv30XutU4AMLOfuej7WWdB3TH7K2tbVb23Vfaki9eI89v7f6A5k\nd8HTr+ywavH6rOm5AMrXvn7SgrF5QtETKQEgGtcSeROdxeOlyfOK/wmBwysZ\nk6zahClFgHvuLlULCrK9vCqv9rlERto3Ceb09g9HPSqP+3CkP+hU2zK1ZRfM\n+ccsYuwtfZ3Raxf7wMl1kR7g1N3n35s5G+vA0t0Sd+WE4BsCgdhr9BVuvB58\ns5DVtnn3iRK7ckGeb9VmzG+rIvEyltmYw0mhlgEk9Q=="
+jenkins_password:
+  secure: "PXXal+Ax+bohRESO0xOn5x0dpj6C+7BpWUTZ5FqLRUlzZZ+eqw9iccaHK0qb\nYaP+haHNjIa4pUM8lAT1NDHvGpaAN6eS/hTBOpKYXnySzFBhNiHA3JBeUFOa\nbwpCqiYs81D7tP5N52ojH2uCIxy2rpWoZNuoOsI5BIOhYoCByuO8jb5LvLFs\nDpkXN8U3v9cCy1UM9Ci8We3cJo7mNL3WOBBn6bbC+YP9O5oAlE/f7kt1gcfg\nsg0sGTWeBWahiddurt/Ojsl3bAZ3kGFvK3u9LQ/iyXs59VjtRd+epJ1G9KdU\nKzNr5xUZwHc+vVDLZY95d8u7B4bccLHE9CrIBO4Irg=="
+credentials_id: '2dfc58d2-9d2e-49dd-849b-4eb1a4933e54'
+private_key_path: '/home/jenkins/.ssh/id_rsa'

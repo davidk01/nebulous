@@ -1,5 +1,6 @@
 require 'digest/sha1'
 require 'opennebula'
+require_relative './errors'
 
 # All configuration loading and validation should happen here
 class PoolConfig
@@ -11,20 +12,114 @@ class PoolConfig
   
     ON = ::OpenNebula # Need a shorter constant
 
+    @@base_types = [String, Integer, Float, true.class, false.class]
+
     @@instantiation_wait_count = 300 # Try to see if the VM is running this many times before giving up
+
+    ##
+    # Go through the options hash and decrypt any secure values with the given key.
+
+    def decrypt_secure_values(options, key)
+      options.each do |k, v|
+        case v
+        when *@@base_types
+          v
+        when Array
+          options[k] = decrypt_secure_array(v, key)
+        when Hash
+          if (s = v['secure'])
+            options[k] = decrypt_secure_string(s, key)
+          else
+            options[k] = decrypt_secure_values(v, key)
+          end
+        else
+          raise UnknownConfigurationKeyValueError, "Unknown yaml type: #{k}, #{v}."
+        end
+      end
+    end
+
+    ##
+    # Iterate through the array and decrypt any secure values.
+
+    def decrypt_secure_array(array, key)
+      array.map do |v|
+        case v
+        when *@@base_types
+          v
+        when Array
+          decrypt_secure_array(v, key)
+        when Hash
+          decrypt_secure_values(v, key)
+        else
+          raise UnknownConfigurationKeyValueError, "Unknown yaml type: #{k}, #{v}."
+        end
+      end
+    end
+
+    ##
+    # Base case: decrypt value with public RSA key and return it. The assumption is that the string is base64 encoded.
+
+    def decrypt_secure_string(str, key)
+      key.public_decrypt(Base64.decode64(str))
+    end
+
+    ##
+    # In some cases need to make sure there are no secure values because it will lead to hard to debug errors.
+
+    def secure_values?(options)
+      options.each do |k, v|
+        case v
+        when Array
+          secure_array_values?(v)
+        when Hash
+          if v['secure']
+            raise UnexpectedSecureValueError, "Unexpected secure value for key: #{k}. Please make sure you pass the decryption key for secure configurations"
+          else
+            secure_values?(v)
+          end
+        when *@@base_types
+        else
+          raise UnknownConfigurationKeyValueError, "Unknown yaml type: #{k}."
+        end
+      end
+    end
+
+    def secure_array_values?(array)
+      array.each do |v|
+        case v
+        when Array
+          secure_array_values?(v)
+        when Hash
+          secure_values?(v)
+        when *@@base_types
+        else
+          raise UnknownConfigurationKeyValueError, "Unknown yaml type: #{v}."
+        end
+      end
+    end
 
     ##
     # Keep the raw hash around and then expose it through various methods.
 
-    def initialize(options = {})
+    def initialize(options = {}, decryption_key_path)
       @options = options
+      # If we have a key then load it and decrypt any secure values
+      if decryption_key_path
+        require 'openssl'
+        require 'base64'
+        key_content = File.read(File.expand_path(decryption_key_path))
+        key = OpenSSL::PKey::RSA.new(key_content)
+        decrypt_secure_values(@options, key)
+      else # make sure there are no secure values because we didn't get a key
+        secure_values?(@options)
+      end
       # Dynamically define all the instance readers that are keys of the options hash
       @options.keys.each do |key|
         singleton_class.instance_eval do
           define_method(key.to_sym) do
             item = @options[key]
             if item.nil?
-              raise StandardError, "Item is nil: #{key}."
+              raise NilConfigurationValueError, "Item is nil: #{key}."
             else
               item
             end
@@ -45,11 +140,11 @@ class PoolConfig
         accumulator
       end
       if missing.any?
-        raise StandardError, "#{self.class} configuration error. Missing configuration parameters: #{missing.join(', ')}."
+        raise MissingConfigurationParameterError, "#{self.class} configuration error. Missing configuration parameters: #{missing.join(', ')}."
       end
       extra_items = @options.reject {|k, v| configuration_items.include?(k)}
       if extra_items.any?
-        raise StandardError, "Unknown configuration parameters found for configuration class #{self.class}: #{extra_items.keys.join(', ')}."
+        raise ExtraConfigurationParameterError, "Unknown configuration parameters found for configuration class #{self.class}: #{extra_items.keys.join(', ')}."
       end
     end
 
@@ -71,7 +166,7 @@ class PoolConfig
         if ON.is_error?(result)
           require 'pp'
           pp result
-          raise StandardError, "Unable to get pool information. Something is wrong with RPC endpoint."
+          raise PoolInformationError, "Unable to get pool information. Something is wrong with RPC endpoint."
         end
         vms = pool.to_hash['VM_POOL']['VM']
         everything = vms.nil? ? [] : (Array === vms ? vms : [vms])
@@ -88,7 +183,7 @@ class PoolConfig
 
     def hashify_vm_object(vm)
       h = vm.to_hash['VM']
-      raise StandardError, "Nil VM." if h.nil?
+      raise NilVMError, "Nil VM." if h.nil?
       h
     end
 
@@ -133,10 +228,10 @@ class PoolConfig
     # We need to wait until we have an IP address for each VM. Re-try 60 times with 1 second timeout for the VMs to be ready.
 
     def instantiate!(count, vm_name_prefix)
-      raise StandardError, "Count must be positive." unless count > 0
+      raise ArgumentError, "Count must be positive." unless count > 0
       template = ON::Template.new(ON::Template.build_xml(template_id), Utils.client)
       if ON.is_error?(template)
-        raise StandardError, "Problem getting template with id: #{template_id}."
+        raise OpenNebulaTemplateError, "Problem getting template with id: #{template_id}."
       end
       vm_objects = (0...count).map do |i|
         vm_name = vm_name_prefix ? "#{vm_name_prefix}-#{name}" : name
@@ -177,8 +272,8 @@ class PoolConfig
      'provision', 'jenkins', 'jenkins_username', 'jenkins_password',
      'credentials_id', 'private_key_path']
 
-    def initialize(options = {})
-      super
+    def initialize(options = {}, decryption_key_path = nil) 
+      super(options, decryption_key_path)
       validate
     end
 
@@ -196,8 +291,8 @@ class PoolConfig
     @@configuration_items = ['name', 'type', 'opennebula_user_id', 'count', 'template_id',
      'provision', 'bamboo', 'bamboo_username', 'bamboo_password']
 
-    def initialize(options = {})
-      super
+    def initialize(options = {}, decryption_key_path = nil)
+      super(options, decryption_key_path)
       validate
     end
 
@@ -210,15 +305,15 @@ class PoolConfig
   ##
   # Load a yaml file, parse it, and create the right configuration instance
 
-  def self.load(filepath)
+  def self.load(filepath, key_path = nil)
     raw_data = YAML.load(File.read(filepath))
     case (config_type = raw_data['type'])
     when 'jenkins'
-      Jenkins.new(raw_data)
+      Jenkins.new(raw_data, key_path)
     when 'bamboo'
-      Bamboo.new(raw_data)
+      Bamboo.new(raw_data, key_path)
     else
-      raise StandardError, "Unknown configuration type: #{config_type}."
+      raise UnknownConfigurationTypeError, "Unknown configuration type: #{config_type}."
     end
   end
 

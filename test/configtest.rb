@@ -23,11 +23,11 @@ class TestConfig < Minitest::Test
   }
 
   def test_empty_jenkins_config
-    assert_raises(StandardError, "Empty config throws an error") { PoolConfig::Jenkins.new({}) }
+    assert_raises(MissingConfigurationParameterError, "Empty config throws an error") { PoolConfig::Jenkins.new({}, nil) }
   end
 
   def test_empty_bamboo_config
-    assert_raises(StandardError, "Empty config throws an error") { PoolConfig::Bamboo.new({}) }
+    assert_raises(MissingConfigurationParameterError, "Empty config throws an error") { PoolConfig::Bamboo.new({}, nil) }
   end
 
   def test_nonempty_jenkins_config
@@ -39,11 +39,11 @@ class TestConfig < Minitest::Test
   end
 
   def test_extra_jenkins_params
-    assert_raises(StandardError, "Extra arguments are an error") { PoolConfig::Jenkins.new(@@valid_jenkins_config.merge({'extra' => true})) }
+    assert_raises(ExtraConfigurationParameterError, "Extra arguments are an error") { PoolConfig::Jenkins.new(@@valid_jenkins_config.merge({'extra' => true})) }
   end
 
   def test_extra_bamboo_params
-    assert_raises(StandardError, "Extra arguments are an error") { PoolConfig::Bamboo.new(@@valid_bamboo_config.merge({'extra' => true})) }
+    assert_raises(ExtraConfigurationParameterError, "Extra arguments are an error") { PoolConfig::Bamboo.new(@@valid_bamboo_config.merge({'extra' => true})) }
   end
 
   def test_loading_jenkins_yaml
@@ -57,7 +57,7 @@ class TestConfig < Minitest::Test
   end
 
   def test_loading_unknown_yaml
-    assert_raises(StandardError, "Loading unknown configuration type raises an error") { 
+    assert_raises(UnknownConfigurationTypeError, "Loading unknown configuration type raises an error") { 
       PoolConfig.load(File.expand_path(File.dirname __FILE__) + '/harness/unknown.yaml') 
     }
   end
@@ -85,6 +85,19 @@ class TestConfig < Minitest::Test
     config.stub :opennebula_state, [] do
       vms = config.opennebula_state
       assert(vms.empty?, "There should be no VMs for the bamboo harness configuration")
+    end
+  end
+
+  def test_loading_secure_config_with_key
+    config = PoolConfig.load(File.expand_path(File.dirname __FILE__) + '/harness/bamboo-secure.yaml',
+                             File.expand_path(File.dirname __FILE__) + '/harness/keys/rsa.pub')
+    assert(config.bamboo_username == 'user', "Decrypted username should be 'user'")
+    assert(config.bamboo_password == 'pass', "Decrypted password should be 'pass'")
+  end
+
+  def test_loading_secure_config_without_key
+    assert_raises(UnexpectedSecureValueError, "Loading configuration with secure values and no key is an error") do
+      config = PoolConfig.load(File.expand_path(File.dirname __FILE__) + '/harness/bamboo-secure.yaml')
     end
   end
 

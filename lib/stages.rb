@@ -1,3 +1,5 @@
+require_relative './errors'
+
 module Stages
 
   def self.from_config(stage, stage_number)
@@ -13,7 +15,7 @@ module Stages
     when 'tar'
       Tar.new(stage['path'], stage['arguments'], stage_number)
     else
-      raise StandardError, "Unknown provisioning stage: #{stage}."
+      raise UnknownProvisioningStageError, "Unknown provisioning stage: #{stage}."
     end
   end
 
@@ -33,9 +35,9 @@ module Stages
     def initialize(path, stage_number)
       @path = path
       @stage_number = stage_number
-      raise StandardError, "Path can not be nil" if @path.nil?
-      raise StandardError, "Stage number can not be nil" if stage_number.nil?
-      raise STandardError, "File does not exist: #{path}." unless File.exist?(path)
+      raise PathNilError, "Path can not be nil" if @path.nil?
+      raise StageNumberNilError, "Stage number can not be nil" if stage_number.nil?
+      raise FilePathError, "File does not exist: #{path}." unless File.exist?(path)
     end
   
     def ssh_prefix(ip_address)
@@ -135,7 +137,7 @@ module Stages
   class Inline < LocalStage
   
     def initialize(command, stage_number)
-      raise StandardError, "Command can not be nil." if command.nil?
+      raise ArgumentError, "Command can not be nil." if command.nil?
       @command = command
       @stage_number = stage_number
     end
