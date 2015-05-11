@@ -2,7 +2,7 @@ require 'opennebula'
 include OpenNebula
 
 creds = File.read('.creds').strip
-endpoint = "https://itools-one-head.yojoe.local/RPC2"
+endpoint = "https://itools-one-head/RPC2"
 client = Client.new(creds, endpoint)
 ssh_prefix = ['ssh',
   '-o UserKnownHostsFile=/dev/null',
