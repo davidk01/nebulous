@@ -1,5 +1,6 @@
 require 'digest/sha1'
 require 'opennebula'
+require 'yaml'
 require_relative './errors'
 
 # All configuration loading and validation should happen here
