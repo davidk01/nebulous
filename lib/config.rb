@@ -166,15 +166,12 @@ class PoolConfig
     def opennebula_state
       counter = 0
       begin
-        pool = ON::VirtualMachinePool.new(Utils.client, opennebula_user_id)
         auth_user = Utils.client.one_auth.split(':').first
         user_pool = ON::UserPool.new(Utils.client)
-        user_poo.info
+        user_pool.info
         auth_user_info = user_pool.to_hash['USER_POOL']['USER'].select {|u| u['NAME'] == auth_user}.first
         auth_user_id = auth_user_info['ID']
-        if auth_user_id.to_i != opennebula_user_id.to_i
-          raise StandardError, "Pool user and auth user id mismatch: config user id = #{opennebula_user_id}, auth user id = #{auth_user_id}"
-        end
+        pool = ON::VirtualMachinePool.new(Utils.client, auth_user_id)
         result = pool.info
         if ON.is_error?(result)
           require 'pp'
@@ -281,7 +278,7 @@ class PoolConfig
 
   class Jenkins < ConfigurationType
 
-    @@configuration_items = ['name', 'opennebula_user_id', 'type', 'count', 'template_id',
+    @@configuration_items = ['name', 'type', 'count', 'template_id',
      'provision', 'jenkins', 'jenkins_username', 'jenkins_password',
      'credentials_id', 'private_key_path']
 
@@ -301,7 +298,7 @@ class PoolConfig
 
   class Bamboo < ConfigurationType
 
-    @@configuration_items = ['name', 'type', 'opennebula_user_id', 'count', 'template_id',
+    @@configuration_items = ['name', 'type', 'count', 'template_id',
      'provision', 'bamboo', 'bamboo_username', 'bamboo_password']
 
     def initialize(options = {}, decryption_key_path = nil)
