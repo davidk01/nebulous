@@ -1,5 +1,6 @@
 require_relative './stages'
 require_relative './errors'
+require 'jenkins_api_client'
 
 ##
 # Supertype for provisioners.
