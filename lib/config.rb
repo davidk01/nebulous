@@ -167,6 +167,12 @@ class PoolConfig
       counter = 0
       begin
         pool = ON::VirtualMachinePool.new(Utils.client, opennebula_user_id)
+        auth_user = Utils.client.one_auth.split(':').first
+        auth_user_info = ON::UserPool.new(Utils.client).to_hash['USER_POOL']['USER'].select {|u| u['NAME'] == auth_user}.first
+        auth_user_id = auth_user_info['ID']
+        if auth_user_id != opennebula_user_id
+          raise StandardError, "Pool user and auth user id mismatch: config user id = #{opennebula_user_id}, auth user id = #{auth_user_id}"
+        end
         result = pool.info
         if ON.is_error?(result)
           require 'pp'
