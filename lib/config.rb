@@ -50,7 +50,11 @@ class PoolConfig
         when Array
           decrypt_secure_array(v, key)
         when Hash
-          decrypt_secure_values(v, key)
+          if (s = v['secure'])
+            decrypt_secure_string(s, key)
+          else
+            decrypt_secure_values(v, key)
+          end
         else
           raise UnknownConfigurationKeyValueError, "Unknown yaml type: #{k}, #{v}."
         end
