@@ -49,4 +49,10 @@ class TestStages < Minitest::Test
     assert(command['echo hi'], "The command actually includes the command we want to run")
   end
 
+  def test_inline_script_stage_as_uploadable
+  end
+
+  def test_script_stage_as_uploadable
+  end
+
 end
