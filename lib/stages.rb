@@ -99,10 +99,6 @@ module Stages
       raise FilePathError, "File does not exist: #{path}." unless File.exist?(path)
     end
   
-    def ssh_prefix(ip_address)
-      "#{@@ssh_prefix} root@#{ip_address} -t"
-    end
-
     def generate_file(opts = {})
       prefix = opts[:prefix]
       if prefix.nil?
@@ -128,9 +124,6 @@ module Stages
       raise StandardError
     end
   
-    def commands(ip_address)
-    end
-
     def generate_file(opts = {})
     end
 
@@ -147,13 +140,6 @@ module Stages
     def initialize(path, arguments, stage_number)
       @arguments = arguments
       super(path, stage_number)
-    end
-
-    ##
-    # Evaluate the template then write it to a file and then generate the commands
-    # for uploading it to the server and executing it just like a regular script type command.
-
-    def commands(ip_address)
     end
 
     def generate_file(opts = {})
@@ -173,9 +159,6 @@ module Stages
       super(path, stage_number)
     end
   
-    def commands(ip_address)
-    end
-
     def generate_file(opts = {})
     end
 
@@ -193,16 +176,6 @@ module Stages
       super(path, stage_number)
     end
   
-    ##
-    # SCP stuff over, chmod +x, and run it.
-
-    def commands(ip_address)
-      script_arguments = @arguments.map {|arg| "\"#{arg}\""}.join(' ')
-      ["#{@@scp_prefix} '#{@path}' root@#{ip_address}:stage-#{@stage_number}.sh",
-       "#{ssh_prefix(ip_address)} 'chmod +x stage-#{@stage_number}.sh'",
-       "#{ssh_prefix(ip_address)} './stage-#{@stage_number}.sh #{script_arguments} && touch #{@stage_number}-done'"]
-    end
-
     ##
     # Just copy the file to target directory with new name.
 
@@ -234,13 +207,6 @@ module Stages
       super(path, stage_number)
     end
   
-    def commands(ip_address)
-      stage_dir = "stage-#{@stage_number}"
-      script_arguments = @arguments.map {|arg| "\"#{arg}\""}.join(' ')
-      ["#{@@scp_prefix} -r '#{@path}' root@#{ip_address}:#{stage_dir}",
-       "#{ssh_prefix(ip_address)} 'pushd #{stage_dir} && bash setup.sh #{script_arguments} && popd && touch #{@stage_number}-done'"]
-    end
-
     def generate_file(opts = {})
       super(opts)
     end
@@ -258,10 +224,6 @@ module Stages
       @stage_number = stage_number
     end
   
-    def commands(ip_address)
-      ["#{ssh_prefix(ip_address)} '#{@command} && touch #{@stage_number}-done'"]
-    end
-
     ##
     # Plop down a file so that it can be uploaded to the host to be executed.
 
