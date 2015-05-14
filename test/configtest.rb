@@ -91,6 +91,10 @@ class TestConfig < Minitest::Test
                              File.expand_path(File.dirname __FILE__) + '/harness/keys/rsa.pub')
     assert(config.bamboo_username == 'user', "Decrypted username should be 'user'")
     assert(config.bamboo_password == 'pass', "Decrypted password should be 'pass'")
+    raw_config = config.instance_variable_get(:@options)
+    decrypted_arguments = raw_config['provision'][-1]['arguments']
+    assert(decrypted_arguments[0] == 'user', "Secure list values should be decrypted as well")
+    assert(decrypted_arguments[1] == 'pass', "Secure list values should be decrypted as well")
   end
 
   def test_loading_secure_config_without_key
