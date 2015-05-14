@@ -101,19 +101,21 @@ class Provisioner
     # Look at the configuration and see what kinds of provisioning stages there are and
     # generate commands accordingly. Each stage can have multiple commands.
 
-    def command_generators(provisioning_stages)
+    def stages(provisioning_stages)
       provisioning_stages.each_with_index.map {|stage, index| Stages.from_config(stage, index)}
     end
 
     ##
-    # For each VM generate the SSH commands that we are going to run.
+    # For each VM generate the commands we are going to run and copy them over.
 
     def generate_ssh_commands(vm_hashes)
-      commands = command_generators(@configuration.provision)
+      stage_collection = StageCollection.new(*stages(@configuration.provision))
+      stage_collection.generate_files
       vm_hashes.map do |vm|
         ip_address = vm['TEMPLATE']['NIC']['IP']
         STDOUT.puts "Generating commands for #{vm['NAME']}."
-        commands.map {|command| command.commands(ip_address)}.flatten
+        stage_collection.scp_files(ip_address)
+        stage_collection.final_command(ip_address)
       end # The end result is an array of arrays [[c1, c2, ...], ..., [c1, c2, c3, ...]] for each VM
     end
 
@@ -123,12 +125,10 @@ class Provisioner
 
     def provision(vm_hashes)
       ready_vms = ssh_ready?(vm_hashes)
-      ssh_commands = generate_ssh_commands(ready_vms)
-      ssh_commands.each do |commands| # All the commands for a VM
-        commands.each do |command| # Each command for the VM
-          STDOUT.puts "Running command: #{command}."
-          system(command)
-        end
+      final_commands = generate_ssh_commands(ready_vms)
+      final_commands.each do |command| # All the commands for a VM
+        STDOUT.puts "Running command: #{command}."
+        system(command)
       end
     end
 

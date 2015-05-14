@@ -64,12 +64,10 @@ module Stages
     end
 
     ##
-    # Once the files are uploaded go to the remote system and execute the runner script.
+    # Once the files are in place we can run them.
 
-    def execute_remote_stages(ip)
+    def final_command(ip)
       command = "#{@@ssh_prefix} root@#{ip} -t 'bash runner.sh'"
-      STDOUT.puts "Running command: #{command}."
-      `#{command}`
     end
 
   end
