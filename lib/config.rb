@@ -171,7 +171,7 @@ class PoolConfig
         user_pool.info
         auth_user_info = user_pool.to_hash['USER_POOL']['USER'].select {|u| u['NAME'] == auth_user}.first
         auth_user_id = auth_user_info['ID']
-        pool = ON::VirtualMachinePool.new(Utils.client, auth_user_id)
+        pool = ON::VirtualMachinePool.new(Utils.client, auth_user_id.to_i)
         result = pool.info
         if ON.is_error?(result)
           require 'pp'
