@@ -109,7 +109,7 @@ class Provisioner
     # For each VM generate the commands we are going to run and copy them over.
 
     def generate_ssh_commands(vm_hashes)
-      stage_collection = StageCollection.new(*stages(@configuration.provision))
+      stage_collection = Stages::StageCollection.new(*stages(@configuration.provision))
       stage_collection.generate_files
       vm_hashes.map do |vm|
         ip_address = vm['TEMPLATE']['NIC']['IP']
