@@ -1,5 +1,4 @@
 name: 'integration-test-jenkins'
-opennebula_user_id: 7
 type: 'jenkins'
 count: 2
 template_id: 3

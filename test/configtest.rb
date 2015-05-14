@@ -11,15 +11,13 @@ class TestConfig < Minitest::Test
       'type' => 'jenkins', 'name' => '#?nonsense', 'count' => 10, 'template_id' => 3,
       'provision' => [], 'jenkins' => 'http://some.server',
       'jenkins_username' => 'someuser', 'jenkins_password' => 'somepassword',
-      'private_key_path' => '/some/file/path', 'credentials_id' => 'uuid',
-      'opennebula_user_id' => 7
+      'private_key_path' => '/some/file/path', 'credentials_id' => 'uuid'
   }
 
   @@valid_bamboo_config = {
      'type' => 'bamboo', 'name' => '#?nonsense', 'count' => 20, 'template_id' => 3,
      'provision' => [], 'bamboo' => 'http://some.server',
-     'bamboo_username' => 'someuser', 'bamboo_password' => 'somepassword',
-     'opennebula_user_id' => 7
+     'bamboo_username' => 'someuser', 'bamboo_password' => 'somepassword'
   }
 
   def test_empty_jenkins_config

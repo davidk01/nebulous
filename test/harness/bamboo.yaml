@@ -1,5 +1,4 @@
 name: 'integration-test-bamboo'
-opennebula_user_id: 7
 type: 'bamboo'
 count: 100
 template_id: 3
