@@ -42,3 +42,6 @@ mv nebulous /opt
 
 # package stuff with fpm
 fpm -s dir -t rpm --name 'nebulous' --epoch 1 --maintainer 'davidk01@github' --version 0.2 /opt/ruby-${version} /opt/nebulous
+
+# Move it to shared directory
+cp *.rpm /vagrant
