@@ -50,6 +50,7 @@ class TestStages < Minitest::Test
   end
 
   def test_inline_script_stage_as_uploadable
+    instances = [Stages::Inline.new('echo hi 1', 1), Stages::Inline.new('echo hi 2', 2)]
   end
 
   def test_script_stage_as_uploadable

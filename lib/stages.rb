@@ -20,6 +20,17 @@ module Stages
   end
 
   ##
+  # Contains a bunch of stages so that there is some kind of generic interface from the provisioners perspective
+
+  class StageConglomoreration
+
+    def initialize(*stages)
+      @stages = stages
+    end
+
+  end
+
+  ##
   # Provisioners that look to the local file system for the various provisioning pieces as opposed
   # to looking remotely like http, git, etc.
   
