@@ -24,7 +24,6 @@ module Stages
 
   class StageCollection
 
-    @@dir_prefix = "tmp/stages"
     @@scp_prefix = ['scp', '-o UserKnownHostsFile=/dev/null', '-o StrictHostKeyChecking=no'].join(' ')
     @@ssh_prefix = ['ssh', '-o UserKnownHostsFile=/dev/null', '-o StrictHostKeyChecking=no', '-o BatchMode=yes', '-o ConnectTimeout=10'].join(' ')
     @@runner_script = "runner.sh"
@@ -34,33 +33,40 @@ module Stages
     end
 
     ##
+    # To make things safe for forking.
+
+    def dir_prefix
+      "tmp/stages/#{Process.pid}"
+    end
+
+    ##
     # Assuming for now we make a tmp directory wherever we are and then plopping down files in that directory.
 
     def generate_files
       # Clear out all the old stuff, re-make the directory, and generate the files
-      `rm -rf #{@@dir_prefix}`
-      `mkdir -p #{@@dir_prefix}`
+      `rm -rf #{dir_prefix}`
+      `mkdir -p #{dir_prefix}`
       @stages.each do |stage|
-        stage.generate_file({:prefix => @@dir_prefix})
+        stage.generate_file({:prefix => dir_prefix})
       end
       STDOUT.puts "Generating runner script."
-      open(File.join(@@dir_prefix, @@runner_script), 'w') do |f|
+      open(File.join(dir_prefix, @@runner_script), 'w') do |f|
         @stages.each do |stage|
           f.puts stage.runner_command
         end
       end
-      # At this point whatever is in @@dir_prefix should have all the necessary files that we can scp them over to the host
+      # At this point whatever is in dir_prefix should have all the necessary files that we can scp them over to the host
     end
 
     ##
     # Copy the files to the host
 
     def scp_files(ip)
-      if Dir[File.join(@@dir_prefix, '*')].empty?
-        raise ProvisioningDirectoryError, "Could not find any files to copy over in dir #{@@dir_prefix}."
+      if Dir[File.join(dir_prefix, '*')].empty?
+        raise ProvisioningDirectoryError, "Could not find any files to copy over in dir #{dir_prefix}."
       end
-      STDOUT.puts "Copying files to #{ip} from #{@@dir_prefix}."
-      `#{@@scp_prefix} -r #{@@dir_prefix}/* root@#{ip}:`
+      STDOUT.puts "Copying files to #{ip} from #{dir_prefix}."
+      `#{@@scp_prefix} -r #{dir_prefix}/* root@#{ip}:`
     end
 
     ##
