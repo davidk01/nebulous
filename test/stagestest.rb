@@ -25,7 +25,7 @@ class TestStages < Minitest::Test
     assert(first_command["scp"], "First command copies stuff with scp")
     assert(first_command["-r"], "It has the recursive flag")
     assert(first_command["root"], "We copy using the root user")
-    assert(first_command['./harness/directory'], "We copy the right directory")
+    assert(first_command['/harness/directory'], "We copy the right directory")
     assert(first_command['stage-1'], "We copy to stage-1 directory")
     assert(first_command['127.0.0.1'], "We copy stuff to the right place")
     second_command = commands[1]
@@ -49,8 +49,16 @@ class TestStages < Minitest::Test
     assert(command['echo hi'], "The command actually includes the command we want to run")
   end
 
-  def test_inline_script_stage_as_uploadable
-    instances = [Stages::Inline.new('echo hi 1', 1), Stages::Inline.new('echo hi 2', 2)]
+  def test_file_generation_provisioning
+    instances = [Stages::Inline.new('echo hi 1', 1), Stages::Inline.new('echo hi 2', 2),
+      Stages::Script.new(File.expand_path(File.dirname __FILE__) + '/harness/script.sh', ['arg1', 'arg2', 'arg3'], 3)]
+    stage_collection = Stages::StageCollection.new(*instances)
+    stage_collection.generate_files
+    generated_files = Dir["tmp/stages/*"]
+    ['stage-1.sh', 'stage-2.sh', 'stage-3.sh'].each do |file|
+      assert(generated_files.any? {|f| f.include?(file)}, "We should have generated #{file}.")
+    end
+    assert(File.exist?("tmp/stages/runner.sh"), "Runner script must exist.")
   end
 
   def test_script_stage_as_uploadable
