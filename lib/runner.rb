@@ -1,3 +1,4 @@
+#!/usr/bin/env ruby
 require_relative '../vendor/bundle/bundler/setup'
 ['./errors', './config', './provisioner', './stages', './utils'].each do |relative|
   require_relative relative
