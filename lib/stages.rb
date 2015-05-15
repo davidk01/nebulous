@@ -224,15 +224,31 @@ module Stages
       super(path, stage_number)
     end
   
+    ##
+    # Copy the directory with a different name.
+
     def generate_file(opts = {})
       super(opts)
+      prefix = opts[:prefix]
+      STDOUT.puts "Generating directory for directory command."
+      target = File.join(prefix, "stage-#{@stage_number}")
+      `cp -r #{@path} #{target}`
     end
 
+    ##
+    # Just run setup.sh in the directory.
+
     def runner_command
+      dir = "stage-#{@stage_number}"
+      script_arguments = @arguments.map {|arg| "\"#{arg}\""}.join(' ')
+      "pushd #{dir}; bash ./setup.sh #{script_arguments}; popd"
     end
 
   end
   
+  ##
+  # Simple inline command.
+
   class Inline < LocalStage
   
     def initialize(command, stage_number)
