@@ -24,7 +24,7 @@ class TestStages < Minitest::Test
     stage_collection.generate_files
     generated_files = Dir["tmp/stages/**"]
     ['stage-1.sh', 'stage-2.sh', 'stage-3.sh'].each do |file|
-      assert(generated_files.any? {|f| f.include?(file)}, "We should have generated #{file}.")
+      assert(generated_files.any? {|f| f.include?(file)}, "We should have generated #{file}: #{generated_files.join(' ')}.")
     end
     assert(File.exist?("tmp/stages/runner.sh"), "Runner script must exist.")
   end
