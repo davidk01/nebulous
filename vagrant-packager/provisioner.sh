@@ -1,4 +1,5 @@
 #!/bin/bash
+package_version="0.3"
 version="2.2.2"
 dir="ruby-${version}"
 if [[ ! -e ${dir} ]]; then
@@ -41,7 +42,7 @@ rm -rf nebulous/.git nebulous/.gitignore
 mv nebulous /opt
 
 # package stuff with fpm
-fpm -s dir -t rpm --name 'nebulous' --epoch 1 --maintainer 'davidk01@github' --version 0.2 /opt/ruby-${version} /opt/nebulous
+fpm -s dir -t rpm --name 'nebulous' --epoch 1 --maintainer 'davidk01@github' --version ${package_version} /opt/ruby-${version} /opt/nebulous
 
 # Move it to shared directory
 cp *.rpm /vagrant
