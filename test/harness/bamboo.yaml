@@ -1,7 +1,7 @@
 name: 'integration-test-bamboo'
 type: 'bamboo'
 count: 100
-template_id: 3
+template_name: 'test'
 provision:
   - command: 'uptime'
     type: 'inline'

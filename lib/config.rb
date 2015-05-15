@@ -10,7 +10,7 @@ class PoolConfig
   # Super type for configuration types.
 
   class ConfigurationType
-  
+
     ON = ::OpenNebula # Need a shorter constant
 
     @@base_types = [String, Integer, Float, true.class, false.class]
@@ -136,6 +136,24 @@ class PoolConfig
       end
     end
 
+    def get_template_id
+      templates = ON::TemplatePool.new(Utils.client)
+      templates.info_all
+      potential_templates = templates['VMTEMPLATE_POOL']['VMTEMPLATE'].select {|info| info['NAME'].include?(template_name)}
+      if potential_templates.length > 1
+        raise SeveralTemplatesMatchesError, "The template name was not unique enough and several templates matched: #{potential_templates.map {|t| t['NAME']}.join(', ')}."
+      end
+      if potential_templates.empty?
+        raise TemplateNotFoundError, "Could not find template with the given name: #{template_name}."
+      end
+      matched_template_id = potential_templates.first['ID'].to_i
+      singleton_class.instance_eval do
+        define_method(:template_id) do
+          matched_template_id
+        end
+      end
+    end
+
     ##
     # Make sure the right configuration parameters exist and show an error message if they don't.
 
@@ -247,6 +265,7 @@ class PoolConfig
 
     def instantiate!(count, vm_name_prefix)
       raise ArgumentError, "Count must be positive." unless count > 0
+      template_id = get_template_id
       template = ON::Template.new(ON::Template.build_xml(template_id), Utils.client)
       if ON.is_error?(template)
         raise OpenNebulaTemplateError, "Problem getting template with id: #{template_id}."
@@ -286,9 +305,9 @@ class PoolConfig
 
   class Jenkins < ConfigurationType
 
-    @@configuration_items = ['name', 'type', 'count', 'template_id',
-     'provision', 'jenkins', 'jenkins_username', 'jenkins_password',
-     'credentials_id', 'private_key_path']
+    @@configuration_items = ['name', 'type', 'count', 'template_name',
+      'provision', 'jenkins', 'jenkins_username', 'jenkins_password',
+      'credentials_id', 'private_key_path']
 
     def initialize(options = {}, decryption_key_path = nil) 
       super(options, decryption_key_path)
@@ -306,8 +325,8 @@ class PoolConfig
 
   class Bamboo < ConfigurationType
 
-    @@configuration_items = ['name', 'type', 'count', 'template_id',
-     'provision', 'bamboo', 'bamboo_username', 'bamboo_password']
+    @@configuration_items = ['name', 'type', 'count', 'template_name',
+      'provision', 'bamboo', 'bamboo_username', 'bamboo_password']
 
     def initialize(options = {}, decryption_key_path = nil)
       super(options, decryption_key_path)

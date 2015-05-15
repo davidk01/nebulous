@@ -8,14 +8,14 @@ require 'minitest/autorun'
 class TestConfig < Minitest::Test
 
   @@valid_jenkins_config = {
-      'type' => 'jenkins', 'name' => '#?nonsense', 'count' => 10, 'template_id' => 3,
+      'type' => 'jenkins', 'name' => '#?nonsense', 'count' => 10, 'template_name' => 'test',
       'provision' => [], 'jenkins' => 'http://some.server',
       'jenkins_username' => 'someuser', 'jenkins_password' => 'somepassword',
       'private_key_path' => '/some/file/path', 'credentials_id' => 'uuid'
   }
 
   @@valid_bamboo_config = {
-     'type' => 'bamboo', 'name' => '#?nonsense', 'count' => 20, 'template_id' => 3,
+     'type' => 'bamboo', 'name' => '#?nonsense', 'count' => 20, 'template_name' => 'test',
      'provision' => [], 'bamboo' => 'http://some.server',
      'bamboo_username' => 'someuser', 'bamboo_password' => 'somepassword'
   }
