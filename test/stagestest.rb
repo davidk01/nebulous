@@ -22,11 +22,12 @@ class TestStages < Minitest::Test
       Stages::Script.new(File.expand_path(File.dirname __FILE__) + '/harness/script.sh', ['arg1', 'arg2', 'arg3'], 3)]
     stage_collection = Stages::StageCollection.new(*instances)
     stage_collection.generate_files
-    generated_files = Dir["tmp/stages/**"]
+    generated_files = Dir["tmp/stages/**/*"]
+    puts "Generated files: #{generated_files.join(' ')}"
     ['stage-1.sh', 'stage-2.sh', 'stage-3.sh'].each do |file|
       assert(generated_files.any? {|f| f.include?(file)}, "We should have generated #{file}: #{generated_files.join(' ')}.")
     end
-    assert(File.exist?("tmp/stages/runner.sh"), "Runner script must exist.")
+    assert(generated_files.any? {|f| f.include?('runner.sh')}, "Runner script must exist.")
   end
 
   def test_script_stage_as_uploadable
