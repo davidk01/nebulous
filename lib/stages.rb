@@ -104,7 +104,7 @@ module Stages
       if prefix.nil?
         raise FileLocationError, "Need a file prefix for writing output of stage."
       end
-      if Dir[File.join(prefix, '*')].any? {|name| name.include?(@stage_number.to_s)}
+      if Dir[File.join(prefix, '*')].map {|f| File.basename(f)}.any? {|name| name.include?(@stage_number.to_s)}
         raise StageFileExistsError, "File for stage already exists: stage number = #{@stage_number}."
       end
     end
