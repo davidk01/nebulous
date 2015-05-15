@@ -80,6 +80,7 @@ valid_actions = {
     vm_hashes = provisioner.opennebula_state
     vm_hashes.each do |vm_hash|
       vm = Utils.vm_by_id(vm_hash['ID'])
+      STDOUT.puts "Killing VM: #{vm_hash['ID']}."
       vm.delete
     end
   end
