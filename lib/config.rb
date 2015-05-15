@@ -89,6 +89,9 @@ class PoolConfig
       end
     end
 
+    ##
+    # Same as above but for arrays.
+
     def secure_array_values?(array)
       array.each do |v|
         case v
@@ -161,17 +164,22 @@ class PoolConfig
     end
 
     ##
+    # Returns the Integer id of the user that is in ~/.one/one_auth.
+
+    def auth_user_id
+      auth_user = Utils.client.one_auth.split(':').first
+      user_pool = ON::UserPool.new(Utils.client)
+      auth_user_info = user_pool.to_hash['USER_POOL']['USER'].select {|u| u['NAME'] == auth_user}.first
+      auth_user_info['ID'].to_i
+    end
+
+    ##
     # Try up to 10 times to get the state and then re-raise the exception if there was one.
 
     def opennebula_state
       counter = 0
       begin
-        auth_user = Utils.client.one_auth.split(':').first
-        user_pool = ON::UserPool.new(Utils.client)
-        user_pool.info
-        auth_user_info = user_pool.to_hash['USER_POOL']['USER'].select {|u| u['NAME'] == auth_user}.first
-        auth_user_id = auth_user_info['ID']
-        pool = ON::VirtualMachinePool.new(Utils.client, auth_user_id.to_i)
+        pool = ON::VirtualMachinePool.new(Utils.client, auth_user_id)
         result = pool.info
         if ON.is_error?(result)
           require 'pp'
