@@ -155,15 +155,32 @@ module Stages
   
   class Tar < LocalStage
     
-    def initialize(path, stage_number)
+    def initialize(path, arguments, stage_number)
+      @arguments = arguments || []
       super(path, stage_number)
     end
   
+    ##
+    # Just copy the tar to the directory and attach the stage number to it.
+
     def generate_file(opts = {})
+      super(opts)
+      prefix = opts[:prefix]
+      STDOUT.puts "Generating file for tar command."
+      target = File.join(prefix, "stage-#{@stage_number}.tar")
+      `cp #{@path} #{target}`
     end
 
+    ##
+    # Extract the tar file, cd into the directory and run the setup script and move back to
+    # the directory we came from.
+
     def runner_command
+      dir = "stage-#{@stage_number}"
+      script_arguments = @arguments.map {|arg| "\"#{arg}\""}.join(' ')
+      "rm -rf #{dir}; mkdir #{dir}; tar -xf #{dir}.tar -C #{dir}; pushd #{dir}; bash ./setup.sh #{script_arguments}; popd"
     end
+
   end
   
   ##
