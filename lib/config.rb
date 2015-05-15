@@ -139,7 +139,7 @@ class PoolConfig
     def get_template_id
       templates = ON::TemplatePool.new(Utils.client)
       templates.info_all
-      potential_templates = templates['VMTEMPLATE_POOL']['VMTEMPLATE'].select {|info| info['NAME'].include?(template_name)}
+      potential_templates = templates.to_hash['VMTEMPLATE_POOL']['VMTEMPLATE'].select {|info| info['NAME'].include?(template_name)}
       if potential_templates.length > 1
         raise SeveralTemplatesMatchesError, "The template name was not unique enough and several templates matched: #{potential_templates.map {|t| t['NAME']}.join(', ')}."
       end
@@ -187,6 +187,7 @@ class PoolConfig
     def auth_user_id
       auth_user = Utils.client.one_auth.split(':').first
       user_pool = ON::UserPool.new(Utils.client)
+      user_pool.info
       auth_user_info = user_pool.to_hash['USER_POOL']['USER'].select {|u| u['NAME'] == auth_user}.first
       auth_user_info['ID'].to_i
     end
