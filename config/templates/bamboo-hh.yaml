@@ -1,8 +1,7 @@
 name: 'hh'
-opennebula_user_id: 8
 type: 'bamboo'
 count: 10
-template_id: 3
+template_name: 'some template name'
 provision:
   - command: 'uptime'
     type: 'inline'
