@@ -116,7 +116,7 @@ class Provisioner
         STDOUT.puts "Generating commands for #{vm['NAME']}."
         stage_collection.scp_files(ip_address)
         stage_collection.final_command(ip_address)
-      end # The end result is an array of arrays [[c1, c2, ...], ..., [c1, c2, c3, ...]] for each VM
+      end
     end
 
     ##
