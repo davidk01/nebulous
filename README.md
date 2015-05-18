@@ -71,3 +71,55 @@ jenkins_password: '${password}'
 credentials_id: '2dfc58d2-9d2e-49dd-849b-4eb1a4933e54'
 private_key_path: '${id_rsa}'
 ```
+
+# Provisioner types
+There are 4 types of provisioners currently and they all pretty much work the same way. Each provisioner is defined by a path to a directory, a shell script, a tar file, or in the case of the inline provisioner just a string that will be executed directly.
+
+## Inline
+Just define the type as `'inline'` and fill in the command:
+
+```
+type: 'inline'
+command: 'uptime'
+```
+
+## Script
+Define the type as `'script'` and fill in the path to the script and provide arguments if any:
+
+```
+type: 'script'
+path: '/some/path/script.sh'
+arguments:
+  - 'arg1'
+  - 'arg2'
+  - 'arg3'
+```
+
+## Directory
+Define the type as `'directory'` and fill the path to the directory and the arguments as in the script type:
+
+```
+type: 'directory'
+path: '/some/directory'
+arguments:
+  - 'arg1'
+  - 'arg2'
+  - 'arg3'
+```
+
+You might be wondering how a directory is executed, well it's not. The assumption is that the directory has a shell script called `setup.sh` that will be executed
+and the arguments are passed to that shell script. The actual operational semantics is to scp the directory to the VM, cd into the directory, and finally run `setup.sh` with
+the given arguments.
+
+## Tar
+Define the type as `'tar'` and fill in the path and arguments as above. The operational semantics is the same as for the directory except there is one extra step where
+the tar file is untarred. The assumption is that there is `setup.sh` that will do the work.
+
+```
+type: 'tar'
+path: '/some/path/bundle.tar'
+arguments:
+  - 'arg1'
+  - 'arg2'
+  - 'arg3'
+```
