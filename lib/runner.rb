@@ -76,6 +76,17 @@ valid_actions = {
     vm_hashes = provisioner.opennebula_state
     provisioner.provision(vm_hashes)
   end,
+  'dump-state' => lambda do |config, opts|
+    provisioner = config.provisioner
+    vm_hashes = provisioner.opennebula_state
+    vm_hashes.each do |vm_hash|
+      id = vm_hash['ID']
+      name = vm_hash['NAME']
+      ip = vm_hash['TEMPLATE']['NIC']['IP']
+      hostname = vm_hash['TEMPLATE']['CONTEXT']['SET_HOSTNAME']
+      STDOUT.puts "#{id} - #{ip} - #{name} - #{hostname}"
+    end
+  end,
   'kill-all' => lambda do |config, opts|
     provisioner = config.provisioner
     vm_hashes = provisioner.opennebula_state
