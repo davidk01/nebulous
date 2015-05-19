@@ -152,6 +152,7 @@ class PoolConfig
           matched_template_id
         end
       end
+      matched_template_id
     end
 
     ##
