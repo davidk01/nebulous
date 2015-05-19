@@ -226,13 +226,6 @@ class Provisioner
       super
     end
 
-    ##
-    # The convention for Bamboo is to prefix 'BNCL' to the name because that is how we decide to kill the VM or not.
-
-    def instantiate
-      super('BNCL')
-    end
-
     def forked_provisioner(delta)
       ForkingProvisioner.new(delta, @configuration)
     end
