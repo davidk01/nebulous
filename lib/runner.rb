@@ -84,7 +84,8 @@ valid_actions = {
       name = vm_hash['NAME']
       ip = vm_hash['TEMPLATE']['NIC']['IP']
       hostname = vm_hash['TEMPLATE']['CONTEXT']['SET_HOSTNAME']
-      STDOUT.puts "#{id} - #{ip} - #{name} - #{hostname}"
+      pool = vm_hash['USER_TEMPLATE']['POOL']
+      STDOUT.puts "#{id} - #{ip} - #{name} - #{hostname} - #{pool}"
     end
   end,
   'kill-all' => lambda do |config, opts|

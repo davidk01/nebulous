@@ -208,7 +208,15 @@ class PoolConfig
         vms = pool.to_hash['VM_POOL']['VM']
         everything = vms.nil? ? [] : (Array === vms ? vms : [vms])
         # Filter things down to just this pool
-        everything.select {|vm| vm['NAME'].include?(name)}
+        everything.select do |vm|
+          pool = vm['USER_TEMPLATE']['POOL']
+          name_match = vm['NAME'].include?(name)
+          if pool.nil?
+            name_match
+          else
+            name_match && pool == name
+          end
+        end
       rescue Exception => ex
         STDERR.puts ex
         counter += 1
@@ -278,6 +286,10 @@ class PoolConfig
         vm_id = template.instantiate(shortened_name, false)
         STDOUT.puts "Got VM by id: #{vm_id}."
         vm = Utils.vm_by_id(vm_id)
+        vm.update("pool=#{name}", true)
+        vm.info
+        vm.info!
+        vm
       end
       # Unfortunate naming but this will return an array of hashes representing the VMs
       instantiation_error_handling(vm_objects)
