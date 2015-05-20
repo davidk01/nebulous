@@ -123,3 +123,29 @@ arguments:
   - 'arg2'
   - 'arg3'
 ```
+
+# Secure Values
+This was shamelessly stolen from how the travis cli does things. You need an RSA key pair. Use one to encrypt and the other to decrypt. Since we are not sending messages
+to third parties and this is all meant for internal use it doesn't really matter which key you use to encrypt or decrypt. Since the public key can be derived from the private key
+but not vice-versa I use the private key to encrypt and the public key to decrypt so only the public key needs to be on the node where nebulous is running.
+
+## Encrypting Values
+No utility yet just a snippet of IRB code
+
+```ruby
+require 'openssl'
+require 'base64'
+key = OpenSSL::RSA::PKey.new(private_key)
+encrypted_value = Base64.encode64(key.private_encrypt(value)).gsub("\n", '')
+```
+
+## Decrypting Values
+Pretty much same as above but you pass in the public key and base64 decode the encrypted value before passing it in. This is what happens when the configuration is loaded
+so this snippet is just for making sure you performed the encryption properly
+
+```ruby
+require 'openssl'
+require 'base64'
+key = OpenSSL::RSA::PKey.new(public_key)
+decrypted_value = key.public_decrypt(Base.decode64(base64_encrypted_value))
+```
