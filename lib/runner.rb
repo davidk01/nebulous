@@ -69,11 +69,19 @@ valid_actions = {
   're-register' => lambda do |config, opts|
     provisioner = config.provisioner
     vm_hashes = provisioner.opennebula_state
+    id_filter = opts[:synthetic]
+    if id_filter
+      vm_hashes.select! {|vm| id_filter.include?(vm['ID'])}
+    end
     provisioner.registration(vm_hashes)
   end,
   're-provision' => lambda do |config, opts|
     provisioner = config.provisioner
     vm_hashes = provisioner.opennebula_state
+    id_filter = opts[:synthetic]
+    if id_filter
+      vm_hashes.select! {|vm| id_filter.include?(vm['ID'])}
+    end
     provisioner.provision(vm_hashes)
   end,
   'dump-state' => lambda do |config, opts|
@@ -91,6 +99,10 @@ valid_actions = {
   'kill-all' => lambda do |config, opts|
     provisioner = config.provisioner
     vm_hashes = provisioner.opennebula_state
+    id_filter = opts[:synthetic]
+    if id_filter
+      vm_hashes.select! {|vm| id_filter.include?(vm['ID'])}
+    end
     vm_hashes.each do |vm_hash|
       vm = Utils.vm_by_id(vm_hash['ID'])
       STDOUT.puts "Killing VM: #{vm_hash['ID']}."
@@ -105,7 +117,7 @@ opts = Trollop::options do
    :required => true, :type => :string, :multi => true
   opt :decryption_key, "File path for the decryption key for secure configurations",
    :required => false, :type => :string, :multi => false
-  opt :synthetic, "Provide a list of IP addresses to act on",
+  opt :synthetic, "Provide a list of IDs to act on",
     :required => false, :type => :strings, :multi => false
   opt :partition, "Set the partition size for parallel provisioning",
    :required => false, :type => :integer, :multi => false
