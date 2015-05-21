@@ -6,9 +6,57 @@ end
 ['trollop'].each do |g|
   require g
 end
-# Valid action mapping. TODO: Fix this to use subcommand pattern because we should be able to do per-VM actions.
+
+##
+# Factors out the commonality among the provisioning and replenishing.
+
+def forking_provisioner_actions(provisioner, partition, actions = [])
+  raise EmptyActionArray, "Must provide at least one action to perform with provisioner." if actions.empty?
+  delta = provisioner.delta
+  forking_provisioners = (1..delta).each_slice(partition).map {|slice| provisioner.forked_provisioner(slice.length)}
+  pids = forking_provisioners.each_with_index.map do |p, i|
+    fork do
+      sleep i * 5
+      vm_hashes = p.instantiate
+      actions.each do |action|
+        p.send(action, vm_hashes)
+      end
+    end
+  end
+  pids.each do |pid|
+    STDOUT.puts "Waiting on child process: #{pid}."
+    Process.wait(pid)
+  end
+end
+
+##
+# Regular actions with no forking involved.
+
+def provisioner_actions(provisioner, actions = [])
+  raise EmptyActionArray, "Must provide at least one action to perform with provisioner." if actions.empty?
+  vm_hashes = provisioner.instantiate
+  actions.each do |action|
+    provisioner.send(action, vm_hashes)
+  end
+end
+
+##
+# Take the options hash and see if there is a partition option and act accordingly
+
+def partition_switch(config, opts, actions)
+  provisioner = config.provisioner
+  if (partition = opts[:partition])
+    forking_provisioner_actions(provisioner, partition, actions)
+  else
+    provisioner_actions(provisioner, actions)
+  end
+end
+
+##
+# All the allowed actions.
+
 valid_actions = {
-  # Clean up stuff on the open nebula side
+  # Clean up stuff on the open nebula side because we no longer see them on the CI side
   'garbage-collect' => lambda do |config, opts|
     provisioner = config.provisioner
     provisioner.garbage_collect
@@ -21,49 +69,13 @@ valid_actions = {
   end,
   # Spin up VMs and provision but don't register
   'provision' => lambda do |config, opts|
-    provisioner = config.provisioner
-    if (partition = opts[:partition])
-      delta = provisioner.delta
-      forking_provisioners = (1..delta).each_slice(partition).map {|slice| provisioner.forked_provisioner(slice.length)}
-      pids = forking_provisioners.each_with_index.map do |p, i|
-        fork do
-          sleep i * 5
-          vm_hashes = p.instantiate
-          p.provision(vm_hashes)
-        end
-      end
-      pids.each do |pid|
-        STDOUT.puts "Waiting on child process: #{pid}."
-        Process.wait(pid)
-      end
-    else
-      vm_hashes = provisioner.instantiate
-      provisioner.provision(vm_hashes)
-    end
+    actions = [:provision]
+    provision_switch(config, opts, actions)
   end,
   # Spin up VMs, provision, and register them
   'replenish' => lambda do |config, opts|
-    provisioner = config.provisioner
-    if (partition = opts[:partition])
-      delta = provisioner.delta
-      forking_provisioners = (1..delta).each_slice(partition).map {|slice| provisioner.forked_provisioner(slice.length)}
-      pids = forking_provisioners.each_with_index.map do |p, i|
-        fork do
-          sleep i * 5
-          vm_hashes = p.instantiate
-          p.provision(vm_hashes)
-          p.registration(vm_hashes)
-        end
-      end
-      pids.each do |pid|
-        STDOUT.puts "Waiting on child process: #{pid}."
-        Process.wait(pid)
-      end
-    else
-      vm_hashes = provisioner.instantiate
-      provisioner.provision(vm_hashes)
-      provisioner.registration(vm_hashes)
-    end
+    actions = [:provision, :registration]
+    provision_switch(config, opts, actions)
   end,
   # Get what exists and try to re-register it
   're-register' => lambda do |config, opts|
@@ -99,7 +111,6 @@ valid_actions = {
   # This is a dangerous operation so adding a warning message and forcing the user
   # to acknowledge they want to proceed
   'kill-all' => lambda do |config, opts|
-    require 'pry'; binding.pry
     provisioner = config.provisioner
     vm_hashes = provisioner.opennebula_state
     id_filter = opts[:synthetic]
@@ -126,6 +137,7 @@ valid_actions = {
     end
   end
 }
+
 opts = Trollop::options do
   opt :configuration, "Location of pool configuration yaml file",
    :required => true, :type => :string, :multi => false

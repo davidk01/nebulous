@@ -1,5 +1,5 @@
 #!/bin/bash
-package_version="0.5.3"
+package_version="0.5.4"
 version="2.2.2"
 dir="ruby-${version}"
 if [[ ! -e ${dir} ]]; then
