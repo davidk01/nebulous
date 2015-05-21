@@ -2,5 +2,6 @@
 tmp/
 .bundle
 vendor/
+bundle/
 .vagrant
 *.rpm

@@ -96,12 +96,27 @@ valid_actions = {
       STDOUT.puts "#{id} - #{ip} - #{name} - #{hostname} - #{pool}"
     end
   end,
+  # This is a dangerous operation so adding a warning message and forcing the user
+  # to acknowledge they want to proceed
   'kill-all' => lambda do |config, opts|
     provisioner = config.provisioner
     vm_hashes = provisioner.opennebula_state
     id_filter = opts[:synthetic]
     if id_filter
       vm_hashes.select! {|vm| id_filter.include?(vm['ID'])}
+    end
+    if opts[:force].nil?
+      STDOUT.puts "You are about to kill a bunch of VMs:"
+      ids = vm_hashes.map {|vm_hash| vm_hash['ID']}.join(', ')
+      STDOUT.puts ids
+      STDOUT.write "Are you sure you want to proceed? (y/n): "
+      confirmation = STDIN.gets.strip.downcase
+      if confirmation.include?('n')
+        STDOUT.puts "Aborting!"
+        exit!
+      else
+        STDOUT.puts "Proceeding!"
+      end
     end
     vm_hashes.each do |vm_hash|
       vm = Utils.vm_by_id(vm_hash['ID'])
@@ -121,6 +136,8 @@ opts = Trollop::options do
     :required => false, :type => :strings, :multi => false
   opt :partition, "Set the partition size for parallel provisioning",
    :required => false, :type => :integer, :multi => false
+  opt :force, "Force a kill-all command without asking for confirmation",
+    :required => false, :type => :flag, :multi => false
 end
 # Instantiate the objects we might need, and pass in the decryption key if there is one
 config = PoolConfig.load(opts[:configuration], opts[:decryption_key])
