@@ -99,13 +99,14 @@ valid_actions = {
   # This is a dangerous operation so adding a warning message and forcing the user
   # to acknowledge they want to proceed
   'kill-all' => lambda do |config, opts|
+    require 'pry'; binding.pry
     provisioner = config.provisioner
     vm_hashes = provisioner.opennebula_state
     id_filter = opts[:synthetic]
     if id_filter
       vm_hashes.select! {|vm| id_filter.include?(vm['ID'])}
     end
-    if opts[:force].nil?
+    unless opts[:force]
       STDOUT.puts "You are about to kill a bunch of VMs:"
       ids = vm_hashes.map {|vm_hash| vm_hash['ID']}.join(', ')
       STDOUT.puts ids
